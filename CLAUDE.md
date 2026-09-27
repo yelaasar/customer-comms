@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for Claude Code in this repo. Setup and run instructions are in `README.md`; the task brief is in `backend/README.md`.
+Guidance for Claude Code in this repo. Setup and run instructions are in `README.md`; each package has its own README.
 
 ## Ground rules
 

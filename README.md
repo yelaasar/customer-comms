@@ -1,6 +1,6 @@
 # Customer comms
 
-A channel-agnostic templating API that builds personalised customer messages, plus a single-page frontend that renders one of them. The task brief is in [`backend/README.md`](backend/README.md).
+A channel-agnostic templating API that builds personalised customer messages, plus a single-page frontend that renders one of them. Each package has its own README with details: [`backend/README.md`](backend/README.md) and [`frontend/README.md`](frontend/README.md).
 
 ## Requirements
 
