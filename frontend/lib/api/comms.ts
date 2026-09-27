@@ -7,39 +7,35 @@ export type YourNextDeliveryResponse = {
   freeGift: boolean;
 };
 
-export type CommsResult = {
-  data: YourNextDeliveryResponse | null;
-  error: string | null;
-};
+export type CommsResult =
+  | { ok: true; data: YourNextDeliveryResponse }
+  | { ok: false; error: string };
 
 export async function getYourNextDelivery({
   userId,
 }: {
   userId: string;
 }): Promise<CommsResult> {
+  let res: Response;
   try {
-    const res = await fetch(
+    res = await fetch(
       `${BASE_URL}/comms/your-next-delivery/${encodeURIComponent(userId)}`,
       { cache: "no-store" },
     );
-    if (!res.ok) {
-      return {
-        data: null,
-        error:
-          res.status === 404
-            ? "We couldn't find an upcoming delivery for this customer."
-            : res.statusText,
-      };
-    }
-    const data = (await res.json()) as YourNextDeliveryResponse;
+  } catch {
+    return { ok: false, error: "Unable to reach the delivery service." };
+  }
+
+  if (res.status === 404) {
     return {
-      data: data,
-      error: null,
-    };
-  } catch (e) {
-    return {
-      data: null,
-      error: e instanceof Error ? e.message : "Request failed",
+      ok: false,
+      error: "We couldn't find an upcoming delivery for this customer.",
     };
   }
+  if (!res.ok) {
+    return { ok: false, error: `Something went wrong (HTTP ${res.status}).` };
+  }
+
+  const data = (await res.json()) as YourNextDeliveryResponse;
+  return { ok: true, data };
 }

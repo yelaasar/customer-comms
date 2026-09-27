@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { PouchSize, User, YourNextDeliveryResponse } from './comms.types';
+import { PouchSize } from '../users/users.types';
+import { YourNextDeliveryResponse } from './comms.types';
+import { UsersRepository } from '../users/users.repository';
 
 // Prices in pence to avoid floating point drift when summing
 const POUCH_PRICES_PENCE: Record<PouchSize, number> = {
@@ -14,9 +14,6 @@ const POUCH_PRICES_PENCE: Record<PouchSize, number> = {
 };
 const FREE_GIFT_THRESHOLD_PENCE = 12000;
 
-// Resolves to backend/data.json from both src/comms and dist/comms
-const DATA_PATH = join(__dirname, '..', '..', 'data.json');
-
 export function formatCatNames(names: string[]): string {
   if (names.length <= 1) {
     return names[0] ?? '';
@@ -26,20 +23,19 @@ export function formatCatNames(names: string[]): string {
 
 @Injectable()
 export class CommsService {
-  private readonly users: Map<string, User>;
-
-  constructor() {
-    const users = JSON.parse(readFileSync(DATA_PATH, 'utf8')) as User[];
-    this.users = new Map(users.map((user) => [user.id, user]));
-  }
+  constructor(private readonly usersRepository: UsersRepository) {}
 
   getYourNextDelivery(userId: string): YourNextDeliveryResponse {
-    const user = this.users.get(userId);
+    const user = this.usersRepository.findById(userId);
     if (!user) {
       throw new NotFoundException(`User ${userId} not found`);
     }
 
     const activeCats = user.cats.filter((cat) => cat.subscriptionActive);
+    if (activeCats.length === 0) {
+      throw new NotFoundException(`User ${userId} has no active subscriptions`);
+    }
+
     const catNames = formatCatNames(activeCats.map((cat) => cat.name));
     const totalPence = activeCats.reduce(
       (sum, cat) => sum + POUCH_PRICES_PENCE[cat.pouchSize],
